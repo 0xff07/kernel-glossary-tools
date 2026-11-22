@@ -1,0 +1,2 @@
+# The same PyYAML as tools/qa/requirements.txt, which is installed beside this file.
+PyYAML==6.0.3

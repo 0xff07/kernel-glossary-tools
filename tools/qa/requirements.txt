@@ -1,0 +1,5 @@
+# The exact versions the test suites pass on, so that CI and every checkout read the tree with the same parser.
+# Raise them together, after tools/qa/tests and `tools/campaign/run.py selftest` pass on the new versions.
+PyYAML==6.0.3
+tree_sitter==0.26.0
+tree_sitter_c==0.24.2

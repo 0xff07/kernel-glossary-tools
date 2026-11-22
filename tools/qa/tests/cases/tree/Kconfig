@@ -1,0 +1,3 @@
+mainmenu "Fixture tree"
+
+source "drivers/thunderbolt/Kconfig"

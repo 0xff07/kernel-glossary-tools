@@ -1,0 +1,67 @@
+name: qa
+
+on:
+  push:
+    paths:
+      - 'README.md'
+      - 'CLAUDE.md'
+      - '.claude-plugin/**'
+      - 'skills/**'
+      - 'tools/**'
+      - 'guidelines/**'
+      - 'campaigns/**'
+      - 'pyproject.toml'
+      - '.flake8'
+      - '.github/workflows/qa.yml'
+  pull_request:
+    paths:
+      - 'README.md'
+      - 'CLAUDE.md'
+      - '.claude-plugin/**'
+      - 'skills/**'
+      - 'tools/**'
+      - 'guidelines/**'
+      - 'campaigns/**'
+      - 'pyproject.toml'
+      - '.flake8'
+      - '.github/workflows/qa.yml'
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0   # the campaign tool's tests read a page at a commit of main
+      - name: Install QA and campaign dependencies in a virtual environment
+        run: |
+          python3 -m venv .venv
+          .venv/bin/pip install --quiet -r tools/qa/requirements.txt -r tools/campaign/requirements.txt
+      - name: Test rule policies, checker behavior, the conformance corpus and the reference figures
+        run: .venv/bin/python -m unittest discover -s tools/qa/tests
+      - run: python3 -m unittest discover -s tools/writer/tests -v
+      - name: Test the campaign tool
+        run: .venv/bin/python tools/campaign/run.py selftest
+      - name: Validate independent rule files and the references between the documents
+        run: .venv/bin/python tools/guidelines_lint.py
+      - name: Check the format and the style of the Python tools
+        run: |
+          .venv/bin/pip install --quiet -r tools/requirements-lint.txt
+          .venv/bin/black --check tools
+          .venv/bin/flake8 tools
+      - name: Check that the workflow scripts parse and the plugin files are well formed
+        run: |
+          set -e
+          for f in skills/*/*.js; do
+            # the Workflow runtime wraps a script in an async function, so a top-level return is legal there
+            { echo 'async function w(){'; sed 's/^export const meta/const meta/' "$f"; echo '}'; } > "/tmp/$(basename "$f").mjs"
+            node --check "/tmp/$(basename "$f").mjs"
+          done
+          python3 - <<'PY'
+          import json, re, pathlib
+          json.load(open('.claude-plugin/plugin.json'))
+          for p in sorted(pathlib.Path('skills').glob('*/SKILL.md')):
+              head = p.read_text(encoding='utf-8').split('---')[1]
+              assert re.search(r'^name: \S+', head, re.M) and re.search(r'^description: \S', head, re.M), p
+          print('plugin files ok')
+          PY

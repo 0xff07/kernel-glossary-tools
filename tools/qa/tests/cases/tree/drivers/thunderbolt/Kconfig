@@ -1,0 +1,8 @@
+menuconfig USB4
+	tristate "Unified support for USB4 and Thunderbolt"
+	help
+	  The fixture subsystem.
+
+config USB4_DEBUGFS_WRITE
+	bool "Enable write by debugfs"
+	depends on USB4

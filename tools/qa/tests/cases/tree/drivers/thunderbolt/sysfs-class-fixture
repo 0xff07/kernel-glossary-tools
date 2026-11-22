@@ -1,0 +1,3 @@
+What:		/sys/class/fixture/<name>/clx
+Date:		Feb 2026
+Description:	The mask of CL states the fixture port has enabled.

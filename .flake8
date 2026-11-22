@@ -1,0 +1,5 @@
+[flake8]
+# E203 (white space before ':') contradicts the slices Black writes; no other
+# check is turned off, here or in the code.
+extend-ignore = E203
+exclude = .git,.venv,progress,__pycache__
